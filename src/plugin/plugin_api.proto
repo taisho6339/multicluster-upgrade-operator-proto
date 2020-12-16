@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package plugin;
+option go_package = "github.com/taisho6339/multicluster-upgrade-operator-proto/go/plugin";
+import "google/protobuf/empty.proto";
+
+service Cluster {
+  // HealthCheck is the endpoint for readiness probe
+  rpc HealthCheck(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  // GetVersion gets the given cluster's version
+  rpc GetVersion(GetVersionRequest) returns (ClusterVersion) {}
+  // GetClusterStatus gets the given cluster's status
+  rpc GetClusterStatus(GetClusterStatusRequest) returns (ClusterStatus) {}
+  // GetOperationStatus gets the given operation's status
+  rpc GetOperationStatus(GetOperationStatusRequest) returns (OperationStatus) {}
+
+  // ServiceIn perform the operation to route to the given cluster
+  rpc ServiceIn(ServiceInRequest) returns (Operation) {}
+  // ServiceOut perform the operation to make the given cluster not be routed
+  rpc ServiceOut(ServiceOutRequest) returns (Operation) {}
+  // UpgradeMaster perform the operation to upgrade master nodes in the given cluster.
+  rpc UpgradeMaster(MasterVersion) returns  (Operation) {}
+  // UpgradeNodePool perform the operation to upgrade worker nodes in the given cluster.
+  rpc UpgradeNodePool(NodePoolVersion) returns (Operation) {}
+}
+
+message GetVersionRequest {
+  // For GKE, "projects/%s/locations/%s/clusters/%s"
+  string clusterID = 1;
+}
+
+message GetClusterStatusRequest {
+  // For GKE, "projects/%s/locations/%s/clusters/%s"
+  string clusterID = 1;
+}
+
+message GetOperationStatusRequest {
+  // For GKE, "projects/%s/locations/%s/clusters/%s"
+  string clusterID = 1;
+  string operationID = 2;
+  string type = 3;
+}
+
+message ServiceInRequest {
+  // For GKE, "projects/%s/locations/%s/clusters/%s"
+  string clusterID = 1;
+}
+
+message ServiceOutRequest {
+  // For GKE, "projects/%s/locations/%s/clusters/%s"
+  string clusterID = 1;
+}
+
+enum OperationStatusType {
+  UNKNOWN = 0;
+  RUNNING = 1;
+  DONE = 2;
+  FAILED = 3;
+}
+
+enum ClusterStatusType {
+  STATUS_SERVICE_IN = 0;
+  STATUS_SERVICE_OUT = 1;
+}
+
+message Operation {
+  string type = 1;
+  string operationID = 2;
+}
+
+message OperationStatus {
+  OperationStatusType status = 1;
+}
+
+message ClusterStatus {
+  // tye type which tells operator whether this cluster is routed currently
+  ClusterStatusType status = 1;
+  // the flag which tells operator whether this cluster can be routed
+  bool isAvailable = 2;
+}
+
+message ClusterVersion {
+  MasterVersion master = 1;
+  repeated NodePoolVersion nodePools = 2;
+}
+
+message MasterVersion {
+  string clusterID = 1;
+  string version = 2;
+}
+
+message NodePoolVersion {
+  string clusterID = 1;
+  string nodePoolID = 2;
+  string version = 3;
+}
