@@ -10,3 +10,6 @@ generate-go:
 	mv ./go/plugin/github.com/taisho6339/multicluster-upgrade-operator-proto/go/plugin/*.go ./go/plugin
 	rm -r ./go/plugin/github.com
 	mockgen -source ./go/plugin/plugin_api_grpc.pb.go -destination ./go/plugin/mock_grpc_client.go -package=plugin
+
+validate-generated: generate-go
+	git diff --exit-code
